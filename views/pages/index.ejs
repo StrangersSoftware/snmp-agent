@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head'); %>
+</head>
+<body class="container">
+
+    <header>
+        <%- include('../partials/header'); %>
+    </header>
+
+    <main>
+        <div class="jumbotron">
+            <h1>Agent settings</h1>
+            <br />
+            <form action="/" method="post">
+                <p>
+                    <label for="ip">Please enter IP-address (or keep empty for 127.0.0.1 ):</label>
+                    <input type="text" id="ip" name="ip" value=<%= ip %>>
+                </p>
+                <p>
+                    <label for="username">Please enter agent Username:</label>
+                    <input type="text" id="username" name="username" value=<%= username %>>
+                </p>
+                <p>
+                    <label for="password">Please enter password:</label>
+                    <input type="password" id="password" name="password">
+                </p>
+                <p>
+                    <label for="security">Select security level:</label>
+                    <select name="security">
+                        <option value="0">NoAuthNoPriv</option >
+                        <option value="1">AuthNoPriv</option >
+                        <option value="2">AuthPriv</option >
+                    </select>
+                </p>
+                <p>
+                    <label for="cpu">CPU Trap Threshold:</label>
+                    <input type="text" id="cpu" name="cpu" value=<%= cpu %>>
+                </p>
+                <p>
+                    <label for="lan">
+                        <input type="checkbox" id="lan" name="lan" <%= lan ? "checked" : "" %> >
+                        Send Network I/F trap
+                    </label>
+                </p>
+                <p>
+                    <label for="disk">Disk Low Trap:</label>
+                    <input type="text" id="disk" name="disk" value=<%= disk %>>
+                </p>
+                <p>
+                    <label for="ram">Low Memory Trap:</label>
+                    <input type="text" id="ram" name="ram" value=<%= ram %>>
+                </p>
+                <button type="submit">Apply</button>
+            </form>
+
+        </div>
+    </main>
+
+    <footer>
+        <%- include('../partials/footer'); %>
+    </footer>
+
+</body>
+</html>
