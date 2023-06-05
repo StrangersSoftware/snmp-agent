@@ -65,7 +65,7 @@ const agentCheckDisks = (error, table, session, threshold) => {
     console.log('AGENT REPORT: disks threshold alert');
 
     const options = {agentAddr: '127.0.0.1'};
-    const appOid = "1.3.6.1.4.1.2002.1";
+    const appOid = "1.3.6.1.4.1.2001.1";
     
     var appVarbind = lowDisks.map(disk => ({
       oid: disk.oid,
@@ -103,7 +103,7 @@ const agentCheckCpu = (error, table, session, threshold) => {
   if  (highCpu.length) {
     console.log('AGENT REPORT: cpu threshold alert');
     const options = {agentAddr: '127.0.0.1'};
-    const appOid = "1.3.6.1.4.1.2002.1";
+    const appOid = "1.3.6.1.4.1.2003.1";
     
     var appVarbind = highCpu.map(core => ({
       oid: core.oid,
