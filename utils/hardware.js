@@ -31,7 +31,7 @@ const getCpu = (error, table) => {
   var indexes = [];
   var names = [];
   if (error) {
-      console.error (error.toString ());
+      console.error (error.toString());
   } else {
       for (let index in table) 
       {
@@ -91,7 +91,7 @@ const agentCheckRam = (error, table, session, threshold) => {
       type: 4,
       value: `${disk.description.toString()} - used ${formatBytes(disk.used * disk.units)} of ${formatBytes(disk.size * disk.units)}`,
     }) );
-    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error); })
+    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error(error.toString()); })
   }
 }
 

@@ -8,85 +8,106 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
-const port = 3000;
+const port = 3377;
 
-let trapReceiverIP = '127.0.0.1';
+const controlledHostIP = '192.168.43.107';
 
-let diskThreshold = 90;
 
-let ramThreshold = 80;
+let globalProps = {
+  authKey: "snmpv3pass",
+  community: 'public',
+  cpu: 60,    
+  disk: 90,    
+  host: '',
+  name: "snmpv3user",
+  privKey: "cryptov3pass",
+  ram: 80,  
+  security: '0',
+  trackLan: false,
+  trapReceiverIP: '127.0.0.1',
+};
 
-let cpuThreshold = 60;
+function getUser() {
 
-let trackLan = false;
+  const level = globalProps.security === '0'
+    ? snmp.SecurityLevel.noAuthNoPriv
+    : globalProps.security === '1'
+      ? snmp.SecurityLevel.authNoPriv
+      : snmp.SecurityLevel.authPriv
 
+  return {
+    authKey: globalProps.authKey,
+    authProtocol: snmp.AuthProtocols.md5,
+    level,
+    name: globalProps.name,
+    privKey: globalProps.privKey,
+    privProtocol: snmp.PrivProtocols.aes,
+  }
+}
 
 app.get('/', async (req, res) => {
-  let response = [];
-  const session = snmp.createSession("127.0.0.1", "public");
+  let host;
+  const session = globalProps.security === '0'
+    ? snmp.createSession(controlledHostIP, globalProps.community)
+    : snmp.createV3Session (controlledHostIP, getUser())
+
   session.get(["1.3.6.1.2.1.1.5.0"], function (error, oid_data) {
     if (error) {
-      console.error(error);
+      console.error(error.toString());
     } else {
       if (snmp.isVarbindError(oid_data[0])) {
         console.error(snmp.varbindError(oid_data[0]));
+        host = error.toString();
       } else {
-        response.push(`${oid_data[0].value}`);
+        host=`${oid_data[0].value}`;
       }
     }
 
-    res.render('pages/index', {
-      ip: trapReceiverIP,
-      username: response[0],
-      disk: diskThreshold,
-      cpu: cpuThreshold,
-      lan: trackLan,
-      ram: ramThreshold,
-    });
+    res.render('pages/index', {...globalProps, host });
     session.close();
   });
 });
 
 app.post('/', (req, res) => {
-  let response = [];
-  trapReceiverIP = req.body.ip || "127.0.0.1";
-  diskThreshold = req.body.disk || 90;
-  ramThreshold = req.body.ram || 80;
-  cpuThreshold = req.body.cpu || 30;
-  trackLan = req.body.lan === 'on' || false;
-  const session = snmp.createSession("127.0.0.1", "public");
+  let host = 'Connection error!';
+  globalProps = {...globalProps, ...req.body};
+  globalProps.trackLan = req.body?.trackLan ? true : false;
+
+  const session = globalProps.security === '0'
+    ? snmp.createSession(controlledHostIP, globalProps.community)
+    : snmp.createV3Session (controlledHostIP, getUser())
 
   session.get(["1.3.6.1.2.1.1.5.0"], function (error, oid_data) {
     if (error) {
-      console.error(error);
+      console.error(error.toString());
+      host = error.toString();
     } else {
       if (snmp.isVarbindError(oid_data[0])) {
         console.error(snmp.varbindError(oid_data[0]));
       } else {
-        response.push(`${oid_data[0].value}`);
+        host=`${oid_data[0].value}`;
       }
     }
 
-    res.render('pages/index', {
-      ip: trapReceiverIP,
-      username: response[0],
-      disk: diskThreshold,
-      cpu: cpuThreshold,
-      lan: trackLan,
-      ram: ramThreshold,
-    });
+    res.render('pages/index', {...globalProps, host });
     session.close();
   });
+
+
 });
 
 
 var global_net_adapters = [];
 
 setInterval(() => {
-  const session = snmp.createSession("127.0.0.1", "public");
-  const trapReceiver = snmp.createSession(trapReceiverIP, "public");
 
-  if (trackLan) {
+  const session = globalProps.security === '0'
+    ? snmp.createSession(controlledHostIP, globalProps.community)
+    : snmp.createV3Session (controlledHostIP, getUser())
+
+  const trapReceiver = snmp.createSession(globalProps.trapReceiverIP, globalProps.community);
+
+  if (globalProps.trackLan) {
     var network_oid = "1.3.6.1.2.1.2.2";
     var lan_adapter_columns = [2, 7, 8, 6];
     const checkAdapters = (error, table) => {
@@ -98,16 +119,16 @@ setInterval(() => {
   var disks_oid = "1.3.6.1.2.1.25.2.3";
   var disks_columns = [2, 3, 4, 5, 6];
 
-  const checkDisks = (error, table) => hardware.agentCheckDisks(error, table, trapReceiver, diskThreshold);
+  const checkDisks = (error, table) => hardware.agentCheckDisks(error, table, trapReceiver, globalProps.disk);
   session.tableColumns(disks_oid, disks_columns, 20, checkDisks);
 
-  const checkRam = (error, table) => hardware.agentCheckRam(error, table, trapReceiver, ramThreshold);
+  const checkRam = (error, table) => hardware.agentCheckRam(error, table, trapReceiver, globalProps.ram);
   session.tableColumns(disks_oid, disks_columns, 20, checkRam);
 
   var cpu_oid = "1.3.6.1.2.1.25.3.3";
   var cpu_columns = [2];
 
-  const checkCpu = (error, table) => hardware.agentCheckCpu(error, table, trapReceiver, cpuThreshold);
+  const checkCpu = (error, table) => hardware.agentCheckCpu(error, table, trapReceiver, globalProps.cpu);
   session.tableColumns(cpu_oid, cpu_columns, 20, checkCpu);
 
 }, 3000);

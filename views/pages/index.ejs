@@ -13,48 +13,69 @@
         <div class="jumbotron">
             <h1>Agent settings</h1>
             <br />
+            <h3>SNMP host name: <%= host %></h3>
+            <br />
             <form action="/" method="post">
                 <p>
-                    <label for="ip">Please enter IP-address (or keep empty for 127.0.0.1 ):</label>
-                    <input type="text" id="ip" name="ip" value=<%= ip %>>
+                    <label for="trapReceiverIP">Please enter IP-address of TRAP receiver:</label>
+                    <input type="text" id="trapReceiverIP" name="trapReceiverIP" value=<%= trapReceiverIP %>>
                 </p>
                 <p>
-                    <label for="username">Please enter agent Username:</label>
-                    <input type="text" id="username" name="username" value=<%= username %>>
-                </p>
-                <p>
-                    <label for="password">Please enter password:</label>
-                    <input type="password" id="password" name="password">
-                </p>
-                <p>
-                    <label for="security">Select security level:</label>
-                    <select name="security">
-                        <option value="0">NoAuthNoPriv</option >
-                        <option value="1">AuthNoPriv</option >
-                        <option value="2">AuthPriv</option >
+                    <label for="security">Select security SNMP level:</label>
+                    <select id='security' name="security" onchange="this.form.submit()">
+                        <option value='0' <%= security === '0' ? "selected" : "" %>>NoAuthNoPriv</option >
+                        <option value='1' <%= security === '1' ? "selected" : "" %>>AuthNoPriv</option >
+                        <option value='2' <%= security === '2' ? "selected" : "" %>>AuthPriv</option >
                     </select>
                 </p>
+                <% if (security === '0') { %>
+                    <p>
+                        <label for="community">Please enter SNMPv1/v2 community name:</label>
+                        <input type="text" id="community" name="community" value=<%= community %>>
+                    </p>
+                <% } %>
+
+                <% if (security === '1' || security === '2') { %>
                 <p>
-                    <label for="cpu">CPU Trap Threshold:</label>
+                    <label for="name">Please enter SNMPv3 user name:</label>
+                    <input type="text" id="name" name="name" value=<%= name %> style="margin-left: 1px">
+                </p>
+                <% } %>
+
+                <% if (security === '1' || security === '2') { %>
+                <p>
+                    <label for="authKey">Please enter SNMPv3 password: </label>
+                    <input type="text" id="authKey" name="authKey" value=<%= authKey %> style="margin-left: 8px" >
+                </p>
+                <% } %>
+
+                <% if (security === '2') { %>
+                <p>
+                    <label for="privKey">Please enter SNMPv3 crypto-key:</label>
+                    <input type="text" id="privKey" name="privKey" value=<%= privKey %>>
+                </p>
+                <% } %>
+
+                <p>
+                    <label for="cpu">CPU Trap Threshold (%):</label>
                     <input type="text" id="cpu" name="cpu" value=<%= cpu %>>
                 </p>
                 <p>
-                    <label for="lan">
-                        <input type="checkbox" id="lan" name="lan" <%= lan ? "checked" : "" %> >
-                        Send Network I/F trap
-                    </label>
-                </p>
-                <p>
-                    <label for="disk">Disk Low Trap:</label>
+                    <label for="disk">Disk Trap Threshold (%):</label>
                     <input type="text" id="disk" name="disk" value=<%= disk %>>
                 </p>
                 <p>
-                    <label for="ram">Low Memory Trap:</label>
+                    <label for="ram">Ram Trap Threshold (%):</label>
                     <input type="text" id="ram" name="ram" value=<%= ram %>>
+                </p>
+                <p>
+                    <label for="trackLan">
+                        <input type="checkbox" id="trackLan" name="trackLan" <%= trackLan ? "checked" : "" %> >
+                        Send Network adapters status change notification Trap message
+                    </label>
                 </p>
                 <button type="submit">Apply</button>
             </form>
-
         </div>
     </main>
 
