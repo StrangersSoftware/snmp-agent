@@ -17,60 +17,60 @@
             <br />
             <form action="/" method="post">
                 <p>
-                    <label for="trapReceiverIP">Please enter IP-address of TRAP receiver:</label>
-                    <input type="text" id="trapReceiverIP" name="trapReceiverIP" value=<%= trapReceiverIP %>>
+                    <label for="trap_receiver_ip">Please enter IP-address of TRAP receiver:</label>
+                    <input type="text" id="trap_receiver_ip" name="trap_receiver_ip" value=<%= trap_receiver_ip %>>
                 </p>
                 <p>
                     <label for="security">Select security SNMP level:</label>
                     <select id='security' name="security" onchange="this.form.submit()">
-                        <option value='0' <%= security === '0' ? "selected" : "" %>>NoAuthNoPriv</option >
-                        <option value='1' <%= security === '1' ? "selected" : "" %>>AuthNoPriv</option >
-                        <option value='2' <%= security === '2' ? "selected" : "" %>>AuthPriv</option >
+                        <option value='NoAuthNoPriv' <%= security === 'NoAuthNoPriv' ? "selected" : "" %>>NoAuthNoPriv</option >
+                        <option value='AuthNoPriv' <%= security === 'AuthNoPriv' ? "selected" : "" %>>AuthNoPriv</option >
+                        <option value='AuthPriv' <%= security === 'AuthPriv' ? "selected" : "" %>>AuthPriv</option >
                     </select>
                 </p>
                 <% if (security === '0') { %>
                     <p>
-                        <label for="community">Please enter SNMPv1/v2 community name:</label>
-                        <input type="text" id="community" name="community" value=<%= community %>>
+                        <label for="community_name">Please enter SNMPv1/v2 community name:</label>
+                        <input type="text" id="community_name" name="community_name" value=<%= community_name %>>
                     </p>
                 <% } %>
 
                 <% if (security === '1' || security === '2') { %>
                 <p>
-                    <label for="name">Please enter SNMPv3 user name:</label>
-                    <input type="text" id="name" name="name" value=<%= name %> style="margin-left: 1px">
+                    <label for="user_name">Please enter SNMPv3 user name:</label>
+                    <input type="text" id="user_name" name="user_name" value=<%= user_name %> style="margin-left: 1px">
                 </p>
                 <% } %>
 
                 <% if (security === '1' || security === '2') { %>
                 <p>
-                    <label for="authKey">Please enter SNMPv3 password: </label>
-                    <input type="text" id="authKey" name="authKey" value=<%= authKey %> style="margin-left: 8px" >
+                    <label for="user_password">Please enter SNMPv3 password: </label>
+                    <input type="text" id="user_password" name="user_password" value=<%= user_password %> style="margin-left: 8px" >
                 </p>
                 <% } %>
 
                 <% if (security === '2') { %>
                 <p>
-                    <label for="privKey">Please enter SNMPv3 crypto-key:</label>
-                    <input type="text" id="privKey" name="privKey" value=<%= privKey %>>
+                    <label for="user_key">Please enter SNMPv3 crypto-key:</label>
+                    <input type="text" id="user_key" name="user_key" value=<%= user_key %>>
                 </p>
                 <% } %>
 
                 <p>
-                    <label for="cpu">CPU Trap Threshold (%):</label>
-                    <input type="text" id="cpu" name="cpu" value=<%= cpu %>>
+                    <label for="cpu_threshold">CPU Trap Threshold (%):</label>
+                    <input type="text" id="cpu_threshold" name="cpu_threshold" value=<%= cpu_threshold %>>
                 </p>
                 <p>
-                    <label for="disk">Disk Trap Threshold (%):</label>
-                    <input type="text" id="disk" name="disk" value=<%= disk %>>
+                    <label for="disk_threshold">Disk Trap Threshold (%):</label>
+                    <input type="text" id="disk_threshold" name="disk_threshold" value=<%= disk_threshold %>>
                 </p>
                 <p>
-                    <label for="ram">Ram Trap Threshold (%):</label>
-                    <input type="text" id="ram" name="ram" value=<%= ram %>>
+                    <label for="ram_threshold">Ram Trap Threshold (%):</label>
+                    <input type="text" id="ram_threshold" name="ram_threshold" value=<%= ram_threshold %>>
                 </p>
                 <p>
-                    <label for="trackLan">
-                        <input type="checkbox" id="trackLan" name="trackLan" <%= trackLan ? "checked" : "" %> >
+                    <label for="inform_network_status">
+                        <input type="checkbox" id="inform_network_status" name="inform_network_status" <%= inform_network_status ? "checked" : "" %> >
                         Send Network adapters status change notification Trap message
                     </label>
                 </p>
