@@ -1,3 +1,5 @@
+const moment = require('moment');
+const fs = require('fs');
 
 const getDisks = (error, table) => {
   var columns = [2, 3, 4, 5, 6];
@@ -62,6 +64,8 @@ const agentCheckDisks = (error, table, session, threshold) => {
   const disksTable = getDisks(error, table);
   const lowDisks = disksTable.filter(disk => (disk.used / disk.size * 100) > threshold && disk.type === '1.3.6.1.2.1.25.2.1.4');
   if  (lowDisks.length) {
+    const fileName = moment().format('DD-MM-YYYY');
+    const timeStamp = moment().format('HH:mm:ss');
     console.log('AGENT REPORT: disks threshold alert');
 
     const options = {agentAddr: '127.0.0.1'};
@@ -72,6 +76,10 @@ const agentCheckDisks = (error, table, session, threshold) => {
       type: 4,
       value: `${disk.description.toString()} - used ${formatBytes(disk.used * disk.units)} of ${formatBytes(disk.size * disk.units)}`,
     }) );
+
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: disks threshold alert\n` );
+    fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(appVarbind)}\n` );
+
     session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error); })
   }
 }
@@ -81,16 +89,22 @@ const agentCheckRam = (error, table, session, threshold) => {
 
   const lowDisks = disksTable.filter(disk => (disk.used / disk.size * 100) > threshold && disk.type === '1.3.6.1.2.1.25.2.1.2');
   if  (lowDisks.length) {
+    const fileName = moment().format('DD-MM-YYYY');
+    const timeStamp = moment().format('HH:mm:ss');
     console.log('AGENT REPORT: ram threshold alert');
 
     const options = {agentAddr: '127.0.0.1'};
     const appOid = "1.3.6.1.4.1.2002.1";
-    
+
     var appVarbind = lowDisks.map(disk => ({
       oid: disk.oid,
       type: 4,
       value: `${disk.description.toString()} - used ${formatBytes(disk.used * disk.units)} of ${formatBytes(disk.size * disk.units)}`,
     }) );
+
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: ram threshold alert\n` );
+    fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(appVarbind)}\n` );
+
     session.trap(appOid, appVarbind, options, function (error) { if (error) console.error(error.toString()); })
   }
 }
@@ -101,7 +115,10 @@ const agentCheckCpu = (error, table, session, threshold) => {
   const highCpu = cpuTable.filter(core => core.load > threshold );
 
   if  (highCpu.length) {
+    const fileName = moment().format('DD-MM-YYYY');
+    const timeStamp = moment().format('HH:mm:ss');
     console.log('AGENT REPORT: cpu threshold alert');
+
     const options = {agentAddr: '127.0.0.1'};
     const appOid = "1.3.6.1.4.1.2003.1";
     
@@ -110,6 +127,10 @@ const agentCheckCpu = (error, table, session, threshold) => {
       type: 4,
       value: `${highCpu.length} cores of  ${cpuTable.length} loaded more than ${threshold}%`,
     }) );
+
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: cpu threshold alert\n` );
+    fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(appVarbind)}\n` );
+
     session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error); })
   }
 }

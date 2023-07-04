@@ -1,4 +1,7 @@
 
+const moment = require('moment');
+const fs = require('fs');
+
 const getAdapters = (error, table) => {
     var columns = [2, 7, 8, 6];
     var indexes = [];
@@ -34,6 +37,8 @@ const agentCheck = (error, table, session, global_net_adapters) => {
       rez.push({...current[i], description: current[i].description.toString().slice(0, -1)});
   
   if  (rez.length && global_net_adapters.length) {
+    const fileName = moment().format('DD-MM-YYYY');
+    const timeStamp = moment().format('HH:mm:ss');
     console.log('AGENT REPORT: network adapters table change');
 
     var options = {agentAddr: '127.0.0.1'};
@@ -44,6 +49,9 @@ const agentCheck = (error, table, session, global_net_adapters) => {
       type: 4, // OctetString
       value: JSON.stringify(item),
     }));
+
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: network adapters table change \n` );
+    fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(varbinds)}\n` );
 
     session.trap(enterpriseOid, varbinds, options, (e) => { if (e) console.error(e); } );
   }
