@@ -121,72 +121,83 @@ const paramsToCheck = [
 setInterval(() => {
   const fileName = moment().format('DD-MM-YYYY');
   const timeStamp = moment().format('HH:mm:ss');
-  let rawData = fs.readFileSync('/usr/local/etc/global_config.json');
-  let allConfig = JSON.parse(rawData);
-  console.log('duty config file check -', fileName);
-  fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - duty config file check\n` );
+  let rawData = null;
+  try {
+    rawData = fs.readFile('/usr/local/etc/global_config.json')
+  } catch(e){}
 
-  if(allConfig.snmp_config && allConfig.snmp_config.length) {
-    
-    const snmp_config= allConfig.snmp_config.find(({is_default}) => is_default)
+  if (!fs.existsSync('logs')) fs.mkdirSync('logs');
 
-    if ((paramsToCheck.some((param) => global_params[param] != snmp_config[param])) && checkInterval) {
-      console.log('previous config cancelled');
-      fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - previous config cancelled\n` );
-      clearInterval(checkInterval);
-      checkInterval = null;
-    }
+  if (rawData) {
+    let allConfig = JSON.parse(rawData);
+    console.log('duty config file check -', fileName);
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - duty config file check\n` );
 
-    if (!checkInterval) {
-      console.log('config selected and started: ', snmp_config);
-      fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - config selected and started: ${JSON.stringify(snmp_config)}\n` );
+    if(allConfig.snmp_config && allConfig.snmp_config.length) {
+      
+      const snmp_config= allConfig.snmp_config.find(({is_default}) => is_default)
 
-      global_params = snmp_config;
+      if ((paramsToCheck.some((param) => global_params[param] != snmp_config[param])) && checkInterval) {
+        console.log('previous config cancelled');
+        fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - previous config cancelled\n` );
+        clearInterval(checkInterval);
+        checkInterval = null;
+      }
 
-      checkInterval = setInterval(() => {
+      if (!checkInterval) {
+        console.log('config selected and started: ', snmp_config);
+        fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - config selected and started: ${JSON.stringify(snmp_config)}\n` );
+
+        global_params = snmp_config;
+
+        checkInterval = setInterval(() => {
+          
+
+          const session = snmp_config.security === 'NoAuthNoPriv'
+            ? snmp.createSession(controlledHostIP, snmp_config.community_name)
+            : snmp.createV3Session (controlledHostIP, getUser())
         
+          const trapReceiver = snmp.createSession(snmp_config.trap_receiver_ip, snmp_config.community_name);
 
-        const session = snmp_config.security === 'NoAuthNoPriv'
-          ? snmp.createSession(controlledHostIP, snmp_config.community_name)
-          : snmp.createV3Session (controlledHostIP, getUser())
-      
-        const trapReceiver = snmp.createSession(snmp_config.trap_receiver_ip, snmp_config.community_name);
+          const current = moment().format('HH:mm:ss');
+          console.log('host props check');
+          fs.appendFileSync(`logs/${fileName}.log`, `${current} - host props check\n` );
 
-        const current = moment().format('HH:mm:ss');
-        console.log('host props check');
-        fs.appendFileSync(`logs/${fileName}.log`, `${current} - host props check\n` );
-
-        if (snmp_config.inform_network_status) {
-          var network_oid = "1.3.6.1.2.1.2.2";
-          var lan_adapter_columns = [2, 7, 8, 6];
-          const checkAdapters = (error, table) => {
-            global_net_adapters = [...network.agentCheck(error, table, trapReceiver, global_net_adapters)];
+          if (snmp_config.inform_network_status) {
+            var network_oid = "1.3.6.1.2.1.2.2";
+            var lan_adapter_columns = [2, 7, 8, 6];
+            const checkAdapters = (error, table) => {
+              global_net_adapters = [...network.agentCheck(error, table, trapReceiver, global_net_adapters)];
+            }
+            session.tableColumns(network_oid, lan_adapter_columns, 1, checkAdapters);
           }
-          session.tableColumns(network_oid, lan_adapter_columns, 1, checkAdapters);
-        }
-      
-        var disks_oid = "1.3.6.1.2.1.25.2.3";
-        var disks_columns = [2, 3, 4, 5, 6];
-      
-        const checkDisks = (error, table) => hardware.agentCheckDisks(error, table, trapReceiver, snmp_config.disk_threshold);
-        session.tableColumns(disks_oid, disks_columns, 20, checkDisks);
-      
-        const checkRam = (error, table) => hardware.agentCheckRam(error, table, trapReceiver, snmp_config.ram_threshold);
-        session.tableColumns(disks_oid, disks_columns, 20, checkRam);
-      
-        var cpu_oid = "1.3.6.1.2.1.25.3.3";
-        var cpu_columns = [2];
-      
-        const checkCpu = (error, table) => hardware.agentCheckCpu(error, table, trapReceiver, snmp_config.cpu_threshold);
-        session.tableColumns(cpu_oid, cpu_columns, 20, checkCpu);
-      }, snmp_config.run_every_in_minute * 60000);
+        
+          var disks_oid = "1.3.6.1.2.1.25.2.3";
+          var disks_columns = [2, 3, 4, 5, 6];
+        
+          const checkDisks = (error, table) => hardware.agentCheckDisks(error, table, trapReceiver, snmp_config.disk_threshold);
+          session.tableColumns(disks_oid, disks_columns, 20, checkDisks);
+        
+          const checkRam = (error, table) => hardware.agentCheckRam(error, table, trapReceiver, snmp_config.ram_threshold);
+          session.tableColumns(disks_oid, disks_columns, 20, checkRam);
+        
+          var cpu_oid = "1.3.6.1.2.1.25.3.3";
+          var cpu_columns = [2];
+        
+          const checkCpu = (error, table) => hardware.agentCheckCpu(error, table, trapReceiver, snmp_config.cpu_threshold);
+          session.tableColumns(cpu_oid, cpu_columns, 20, checkCpu);
+        }, snmp_config.run_every_in_minute * 60000);
+      }
+    } else {
+      console.log('SNMP config was not found in file');
+      fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - SNMP config was not found\n` );
     }
   } else {
-    console.log('SNMP config was not found');
-    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - SNMP config was not found\n` );
+    console.log('SNMP config file was not found');
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - SNMP config file was not found\n` );
   }
 
-}, 20000);
+}, 2000);
 
 
 
