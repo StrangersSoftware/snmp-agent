@@ -7,8 +7,12 @@ const getAdapters = (error, table) => {
     var indexes = [];
     var mac_addresses = [];
     if (error) {
-        console.error (error.toString ());
-    } else {
+      const fileName = moment().format('DD-MM-YYYY');
+      const timeStamp = moment().format('HH:mm:ss');
+      if(error.name === 'RequestTimedOutError') console.error('Network adapters check: Request timed out. Possible wrong parameters reasons: community name, port number or SNMP service/daemon fail.') ;
+        else console.error('Network adapters check:', error.message);
+      fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - Network adapters check: ${error.message}.\n` );
+      } else {
         for (let index in table) 
         {
           if(table[index][columns[3]].length && !mac_addresses.some((item) => !Buffer.compare(item, table[index][columns[3]]))) 

@@ -123,14 +123,14 @@ setInterval(() => {
   const timeStamp = moment().format('HH:mm:ss');
   let rawData = null;
   try {
-    rawData = fs.readFile('/usr/local/etc/global_config.json')
+    rawData = fs.readFileSync('/usr/local/etc/global_config.json')
   } catch(e){}
 
   if (!fs.existsSync('logs')) fs.mkdirSync('logs');
 
   if (rawData) {
     let allConfig = JSON.parse(rawData);
-    console.log('duty config file check -', fileName);
+    console.log('duty config file check');
     fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - duty config file check\n` );
 
     if(allConfig.snmp_config && allConfig.snmp_config.length) {
@@ -156,7 +156,7 @@ setInterval(() => {
           const session = snmp_config.security === 'NoAuthNoPriv'
             ? snmp.createSession(controlledHostIP, snmp_config.community_name)
             : snmp.createV3Session (controlledHostIP, getUser())
-        
+
           const trapReceiver = snmp.createSession(snmp_config.trap_receiver_ip, snmp_config.community_name);
 
           const current = moment().format('HH:mm:ss');
@@ -197,7 +197,7 @@ setInterval(() => {
     fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - SNMP config file was not found\n` );
   }
 
-}, 2000);
+}, 20000);
 
 
 

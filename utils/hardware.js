@@ -6,16 +6,20 @@ const getDisks = (error, table) => {
   var indexes = [];
   var names = [];
   if (error) {
-      console.error (error.toString ());
+    const fileName = moment().format('DD-MM-YYYY');
+    const timeStamp = moment().format('HH:mm:ss');
+    if(error.name === 'RequestTimedOutError') console.error('Storages check: Request timed out. Possible wrong parameters reasons: community name, port number or SNMP service/daemon fail.') ;
+      else console.error('Storages check:', error.message);
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - Storages check: ${error.message}.\n` );
   } else {
-      for (let index in table) 
+    for (let index in table) 
+    {
+      if(table[index][columns[1]].length && !names.some((item) => !Buffer.compare(item, table[index][columns[1]]))) 
       {
-        if(table[index][columns[1]].length && !names.some((item) => !Buffer.compare(item, table[index][columns[1]]))) 
-        {
-          indexes.push (parseInt (index));
-          names.push(table[index][columns[1]]);
-        }
+        indexes.push (parseInt (index));
+        names.push(table[index][columns[1]]);
       }
+    }
   }
 
   return indexes.map((index)=> ({ 
@@ -33,7 +37,11 @@ const getCpu = (error, table) => {
   var indexes = [];
   var names = [];
   if (error) {
-      console.error (error.toString());
+    const fileName = moment().format('DD-MM-YYYY');
+    const timeStamp = moment().format('HH:mm:ss');
+    if(error.name === 'RequestTimedOutError') console.error('CPU check: Request timed out. Possible wrong parameters reasons: community name, port number or SNMP service/daemon fail.') ;
+      else console.error('CPU check:', error.message);
+    fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - CPU check: ${error.message}.\n` );
   } else {
       for (let index in table) 
       {
@@ -67,7 +75,6 @@ const agentCheckDisks = (error, table, session, threshold) => {
     const fileName = moment().format('DD-MM-YYYY');
     const timeStamp = moment().format('HH:mm:ss');
     console.log('AGENT REPORT: disks threshold alert');
-
     const options = {agentAddr: '127.0.0.1'};
     const appOid = "1.3.6.1.4.1.2001.1";
     
@@ -80,7 +87,7 @@ const agentCheckDisks = (error, table, session, threshold) => {
     fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: disks threshold alert\n` );
     fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(appVarbind)}\n` );
 
-    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error); })
+    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error.toString()); })
   }
 }
 
@@ -105,7 +112,7 @@ const agentCheckRam = (error, table, session, threshold) => {
     fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: ram threshold alert\n` );
     fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(appVarbind)}\n` );
 
-    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error(error.toString()); })
+    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error(error.toString());})
   }
 }
 
@@ -131,7 +138,7 @@ const agentCheckCpu = (error, table, session, threshold) => {
     fs.appendFileSync(`logs/${fileName}.log`, `${timeStamp} - AGENT REPORT: cpu threshold alert\n` );
     fs.appendFileSync(`logs/${fileName}.log`, `${JSON.stringify(appVarbind)}\n` );
 
-    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error); })
+    session.trap(appOid, appVarbind, options, function (error) { if (error) console.error (error.toString()); })
   }
 }
 
